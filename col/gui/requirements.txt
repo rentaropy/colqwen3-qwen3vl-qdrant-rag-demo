@@ -1,0 +1,5 @@
+streamlit==1.42.0
+requests==2.32.3
+qdrant-client==1.13.2
+pypdfium2==4.30.0
+Pillow==10.4.0

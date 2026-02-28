@@ -1,0 +1,84 @@
+services:
+  colqwen3-embed:
+    build:
+      context: ./col/embed_server
+      dockerfile: Dockerfile
+    image: colqwen3-embed-local:latest
+    container_name: colqwen3-embed
+    restart: unless-stopped
+    ports:
+      - "${EMBED_PORT:-8000}:8000"
+    ipc: host
+    gpus: all
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - MODEL_ID=${MODEL_ID:-TomoroAI/tomoro-ai-colqwen3-embed-4b-awq}
+      - COLQWEN_MAX_NUM_VISUAL_TOKENS=${COLQWEN_MAX_NUM_VISUAL_TOKENS:-1280}
+      - COLQWEN_ATTN_IMPLEMENTATION=${COLQWEN_ATTN_IMPLEMENTATION:-sdpa}
+      - COLQWEN_DTYPE=${COLQWEN_DTYPE:-bfloat16}
+      - COLQWEN_PRELOAD_ON_START=${COLQWEN_PRELOAD_ON_START:-1}
+    volumes:
+      - ${HOME}/.cache/huggingface:/root/.cache/huggingface
+
+  vlm-llamacpp:
+    image: ${VLM_LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp:server-cuda}
+    container_name: vlm-llamacpp
+    restart: unless-stopped
+    ports:
+      - "${VLM_PORT:-8001}:8000"
+    gpus: all
+    environment:
+      - VLM_GGUF_REPO=${VLM_GGUF_REPO}
+      - VLM_GGUF_FILE=${VLM_GGUF_FILE}
+      - VLM_MMPROJ_FILE=${VLM_MMPROJ_FILE}
+      - VLM_CTX_SIZE=${VLM_CTX_SIZE}
+      - LLAMA_N_GPU_LAYERS=${LLAMA_N_GPU_LAYERS}
+      - LLAMA_THREADS=${LLAMA_THREADS}
+      - LLAMA_PARALLEL=${LLAMA_PARALLEL}
+    entrypoint: ["/bin/sh", "-lc", "/workspace/col/llamacpp/start.sh"]
+    volumes:
+      - ./models:/models
+      - ./:/workspace
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.6
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_HTTP_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  rag-gui:
+    image: python:3.12-slim
+    container_name: rag-gui
+    restart: unless-stopped
+    depends_on:
+      - colqwen3-embed
+      - qdrant
+      - vlm-llamacpp
+    working_dir: /app
+    entrypoint: ["/bin/bash", "-lc"]
+    command: ["/app/col/gui/start.sh"]
+    ports:
+      - "${GUI_PORT:-8501}:8501"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PIP_DISABLE_PIP_VERSION_CHECK=1
+      - MODEL_ID=${MODEL_ID:-TomoroAI/tomoro-ai-colqwen3-embed-4b-awq}
+      - VLLM_BASE_URL=http://colqwen3-embed:8000
+      - VLM_BASE_URL=http://vlm-llamacpp:8000
+      - QDRANT_URL=http://qdrant:6333
+      - VLM_MODEL_ID=${VLM_MODEL_ID:-Qwen3-VL-4B-Instruct-Q5_K_M.gguf}
+      - RAG_COLLECTION=${RAG_COLLECTION:-jaxa_pdf_pages}
+      - RAG_TOP_K=${RAG_TOP_K:-2}
+      - RAG_DOCS_DIR=${RAG_DOCS_DIR:-/app/docs}
+      - RAG_RENDER_SCALE=${RAG_RENDER_SCALE:-1.5}
+      - AUTO_INGEST_ON_START=${AUTO_INGEST_ON_START:-1}
+
+volumes:
+  qdrant_data:

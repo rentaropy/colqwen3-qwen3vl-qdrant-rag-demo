@@ -1,0 +1,20 @@
+# Secrets / local config
+.env
+
+# Runtime artifacts
+.rag_gui_manifest.json
+.rag_gui_startup_report.json
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Model files (downloaded at runtime)
+models/
