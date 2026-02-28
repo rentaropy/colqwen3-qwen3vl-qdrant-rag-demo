@@ -51,10 +51,28 @@ cp ./.env.example ./.env
 
 ## 起動
 ```bash
+docker compose up colqwen3-embed qdrant vlm-llamacpp rag-gui
+```
+
+必要に応じてデタッチ起動する場合:
+```bash
 docker compose up -d colqwen3-embed qdrant vlm-llamacpp rag-gui
 ```
 
-## 動作確認
+## 使い方
+1. `http://localhost:8501` にアクセス
+2. 質問を入力
+3. `検索して回答` を実行
+
+## デモ資料
+本デモでは、[JAXA 共通技術文書](https://sma.jaxa.jp/techdoc.html) の以下資料を使用しています。
+
+- 技術要求・ガイドライン文書（共通）
+- [JERG-0-041 宇宙用電気配線工程標準](docs/JAXA-JERG-0-041_宇宙用電気配線工程標準.pdf)
+- 技術要求・ガイドライン文書（ロケット）
+- [JERG-1-009 ロケット機器用鉛フリー部品適用工程標準](docs/JAXA-JERG-1-009A_ロケット機器用鉛フリー部品適用工程標準.pdf)
+
+## デバッグ
 ```bash
 curl -sS http://localhost:8000/v1/models
 curl -sS http://localhost:8001/health
