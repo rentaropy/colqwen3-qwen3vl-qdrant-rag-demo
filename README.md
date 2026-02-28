@@ -31,8 +31,10 @@ GUI: `http://localhost:8501`
 - 複雑レイアウト文書（規格書・図表混在）で有利
 - 計算/ストレージコストはシングルベクトルより重い
 
-## 前提
-- NVIDIA GPU + nvidia-container-toolkit
+## 動作要件
+- NVIDIA GPU（VRAM >= 12GB）
+- NVIDIA Driver
+- nvidia-container-toolkit
 - Docker / Docker Compose
 
 ## セットアップ
